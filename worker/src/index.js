@@ -14,6 +14,11 @@ const VERIFY_HOURS = 24;
 const ALLOWED_EMAIL_DOMAIN = "@descomm.com";
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMITED_PATHS = new Set(["/api/register", "/api/login", "/api/resend-verification"]);
+
+function normalizeEmail(email) {
+  return (email || "").toLowerCase().trim();
+}
 
 // Fixed-window counter per bucket (path:ip). D1 read replicas are eventually
 // consistent, so a request can occasionally read a stale counter and slip
@@ -88,6 +93,14 @@ async function getUserFromSession(db, token) {
   return row || null;
 }
 
+async function createVerificationToken(db, userId) {
+  const token = newToken();
+  const expires = new Date(Date.now() + VERIFY_HOURS * 3600000).toISOString();
+  await db.prepare("INSERT INTO email_verifications (token, user_id, expires_at) VALUES (?, ?, ?)")
+    .bind(token, userId, expires).run();
+  return token;
+}
+
 async function sendVerificationEmail(env, toEmail, token, workerOrigin) {
   const verifyUrl = `${workerOrigin}/api/verify?token=${token}`;
   const res = await fetch("https://api.resend.com/emails", {
@@ -128,7 +141,6 @@ export default {
 
     const db = env.DB;
 
-    const RATE_LIMITED_PATHS = new Set(["/api/register", "/api/login", "/api/resend-verification"]);
     if (RATE_LIMITED_PATHS.has(url.pathname) && request.method === "POST") {
       const ip = request.headers.get("CF-Connecting-IP") || "unknown";
       const allowed = await checkRateLimit(db, `${url.pathname}:${ip}`, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SECONDS);
@@ -137,7 +149,7 @@ export default {
 
     if (url.pathname === "/api/register" && request.method === "POST") {
       const { email, password, displayName } = await request.json();
-      const normalizedEmail = (email || "").toLowerCase().trim();
+      const normalizedEmail = normalizeEmail(email);
       if (!normalizedEmail.endsWith(ALLOWED_EMAIL_DOMAIN)) {
         return json({ error: "This email provider is not supported." }, 400, cors);
       }
@@ -160,10 +172,7 @@ export default {
         return json({ error: "Email already registered" }, 409, cors);
       }
 
-      const token = newToken();
-      const expires = new Date(Date.now() + VERIFY_HOURS * 3600000).toISOString();
-      await db.prepare("INSERT INTO email_verifications (token, user_id, expires_at) VALUES (?, ?, ?)")
-        .bind(token, userId, expires).run();
+      const token = await createVerificationToken(db, userId);
       await sendVerificationEmail(env, normalizedEmail, token, url.origin);
 
       return json({ ok: true }, 201, cors);
@@ -187,16 +196,13 @@ export default {
 
     if (url.pathname === "/api/resend-verification" && request.method === "POST") {
       const { email } = await request.json();
-      const normalizedEmail = (email || "").toLowerCase().trim();
+      const normalizedEmail = normalizeEmail(email);
       const user = await db.prepare("SELECT id, email_verified FROM users WHERE email = ?")
         .bind(normalizedEmail).first();
 
       // Always return ok to avoid leaking which emails are registered.
       if (user && !user.email_verified) {
-        const token = newToken();
-        const expires = new Date(Date.now() + VERIFY_HOURS * 3600000).toISOString();
-        await db.prepare("INSERT INTO email_verifications (token, user_id, expires_at) VALUES (?, ?, ?)")
-          .bind(token, user.id, expires).run();
+        const token = await createVerificationToken(db, user.id);
         await sendVerificationEmail(env, normalizedEmail, token, url.origin);
       }
       return json({ ok: true }, 200, cors);
@@ -205,7 +211,7 @@ export default {
     if (url.pathname === "/api/login" && request.method === "POST") {
       const { email, password } = await request.json();
       const user = await db.prepare("SELECT id, password_hash, email_verified FROM users WHERE email = ?")
-        .bind((email || "").toLowerCase().trim()).first();
+        .bind(normalizeEmail(email)).first();
       if (!user) return json({ error: "Invalid email or password" }, 401, cors);
 
       const [salt, storedHash] = user.password_hash.split(":");
