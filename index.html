@@ -7,37 +7,34 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header>
-    <strong>DES Tools</strong>
-    <div id="auth-box">
-      <form id="auth-form">
-        <input name="email" type="email" placeholder="email" required>
-        <input name="password" type="password" placeholder="password" required minlength="8">
-        <button type="submit" name="login">Log in</button>
-        <button type="submit" name="register">Register</button>
-      </form>
-      <span id="auth-msg"></span>
-    </div>
-    <div id="user-box" hidden>
-      <label><input type="checkbox" id="theme-toggle"> Dark mode</label>
-      <span id="user-email"></span>
-      <button id="logout-btn">Log out</button>
-    </div>
-  </header>
+  <div class="shell">
+    <aside class="sidebar">
+      <strong class="brand">DES Tools</strong>
+      <nav id="tool-nav"></nav>
+    </aside>
 
-  <main>
-    <h1>Install &amp; Troubleshooting Tools</h1>
-    <div class="tools">
-      <a class="tool-card" href="stream-calculator/">
-        <h3>Stream Calculator</h3>
-        <p>Bandwidth / stream sizing calculator.</p>
-      </a>
-      <a class="tool-card" href="https://your-org.github.io/Wireshark-Helper/">
-        <h3>Wireshark Helper</h3>
-        <p>Capture analysis helpers and reports.</p>
-      </a>
+    <div class="shell-main">
+      <header>
+        <span id="page-title">Dashboard</span>
+        <div id="auth-box">
+          <form id="auth-form">
+            <input name="email" type="email" placeholder="email" required>
+            <input name="password" type="password" placeholder="password" required minlength="8">
+            <button type="submit" name="login">Log in</button>
+            <button type="submit" name="register">Register</button>
+          </form>
+          <span id="auth-msg"></span>
+        </div>
+        <div id="user-box" hidden>
+          <label><input type="checkbox" id="theme-toggle"> Dark mode</label>
+          <span id="user-email"></span>
+          <button id="logout-btn">Log out</button>
+        </div>
+      </header>
+
+      <main id="content"></main>
     </div>
-  </main>
+  </div>
 
   <script src="assets/app.js"></script>
 </body>

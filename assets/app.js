@@ -1,5 +1,44 @@
 const API = "https://des-tools-auth.lgarrett.workers.dev";
 
+// Add an entry here for each tool submodule to add it to the dashboard nav.
+const TOOLS = [
+  { slug: "stream-calculator", title: "Stream Calculator", path: "stream-calculator/index.html" },
+];
+
+const nav = document.getElementById("tool-nav");
+const pageTitle = document.getElementById("page-title");
+const content = document.getElementById("content");
+
+function renderNav() {
+  nav.innerHTML =
+    `<a href="#/" data-slug="">Dashboard</a>` +
+    TOOLS.map(t => `<a href="#/${t.slug}" data-slug="${t.slug}">${t.title}</a>`).join("");
+}
+
+function renderRoute() {
+  const slug = location.hash.replace(/^#\/?/, "");
+  const tool = TOOLS.find(t => t.slug === slug);
+
+  nav.querySelectorAll("a").forEach(a => a.classList.toggle("active", a.dataset.slug === slug));
+
+  content.classList.toggle("full-bleed", !!tool);
+
+  if (!tool) {
+    pageTitle.textContent = "Dashboard";
+    content.innerHTML = `<div class="tools">${TOOLS.map(t =>
+      `<a class="tool-card" href="#/${t.slug}"><h3>${t.title}</h3></a>`
+    ).join("")}</div>`;
+    return;
+  }
+
+  pageTitle.textContent = tool.title;
+  content.innerHTML = `<iframe class="tool-frame" src="${tool.path}"></iframe>`;
+}
+
+renderNav();
+renderRoute();
+window.addEventListener("hashchange", renderRoute);
+
 const authBox = document.getElementById("auth-box");
 const authForm = document.getElementById("auth-form");
 const authMsg = document.getElementById("auth-msg");
