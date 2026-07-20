@@ -66,7 +66,7 @@ async function getUserFromSession(db, token) {
 
 async function sendVerificationEmail(env, toEmail, token, workerOrigin) {
   const verifyUrl = `${workerOrigin}/api/verify?token=${token}`;
-  await fetch("https://api.resend.com/emails", {
+  const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
@@ -81,6 +81,9 @@ async function sendVerificationEmail(env, toEmail, token, workerOrigin) {
              <p>This link expires in ${VERIFY_HOURS} hours.</p>`,
     }),
   });
+  if (!res.ok) {
+    console.error(`Resend send failed (${res.status}) for ${toEmail}: ${await res.text()}`);
+  }
 }
 
 export default {
