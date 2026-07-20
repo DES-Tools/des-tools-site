@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DES Tools</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header>
+    <strong>DES Tools</strong>
+    <div id="auth-box">
+      <form id="auth-form">
+        <input name="email" type="email" placeholder="email" required>
+        <input name="password" type="password" placeholder="password" required minlength="8">
+        <button type="submit" name="login">Log in</button>
+        <button type="submit" name="register">Register</button>
+      </form>
+      <span id="auth-msg"></span>
+    </div>
+    <div id="user-box" hidden>
+      <label><input type="checkbox" id="theme-toggle"> Dark mode</label>
+      <span id="user-email"></span>
+      <button id="logout-btn">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <h1>Install &amp; Troubleshooting Tools</h1>
+    <div class="tools">
+      <a class="tool-card" href="https://your-org.github.io/Stream-Calculator/">
+        <h3>Stream Calculator</h3>
+        <p>Bandwidth / stream sizing calculator.</p>
+      </a>
+      <a class="tool-card" href="https://your-org.github.io/Wireshark-Helper/">
+        <h3>Wireshark Helper</h3>
+        <p>Capture analysis helpers and reports.</p>
+      </a>
+    </div>
+  </main>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

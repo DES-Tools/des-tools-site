@@ -1,0 +1,13 @@
+name = "des-tools-auth"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "des-tools"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# Set the exact GitHub Pages origin allowed to call this Worker.
+# e.g. https://your-org.github.io
+[vars]
+ALLOWED_ORIGIN = "https://your-org.github.io"
