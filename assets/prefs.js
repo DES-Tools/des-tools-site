@@ -11,6 +11,9 @@
 
 (function () {
   const API = "https://des-tools-auth.lgarrett.workers.dev";
+  const embedded = (() => {
+    try { return window.self !== window.top; } catch { return true; }
+  })();
   let cachedMe = null;
 
   async function me() {
@@ -25,6 +28,19 @@
   }
 
   window.DESPrefs = {
+    // True when running inside the dashboard's tool iframe (same origin,
+    // so direct access to the parent document works below).
+    embedded,
+
+    // Embedded tools should hide their own theme UI and follow the
+    // dashboard's theme instead of managing their own.
+    onThemeChange(callback) {
+      if (!embedded) return;
+      const parentDoc = window.parent.document;
+      callback(parentDoc.documentElement.dataset.theme || "light");
+      parentDoc.addEventListener("des-tools:theme", (e) => callback(e.detail));
+    },
+
     async get(key, fallback) {
       const session = await me();
       if (session && key in session.preferences) return session.preferences[key];

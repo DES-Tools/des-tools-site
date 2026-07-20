@@ -50,6 +50,7 @@ const themeToggle = document.getElementById("theme-toggle");
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   if (themeToggle) themeToggle.checked = theme === "dark";
+  document.dispatchEvent(new CustomEvent("des-tools:theme", { detail: theme }));
 }
 
 async function api(path, options = {}) {
