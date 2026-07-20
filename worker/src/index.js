@@ -123,11 +123,14 @@ export default {
     if (url.pathname === "/api/prefs" && request.method === "POST") {
       const user = await getUserFromSession(db, getCookie(request, "session"));
       if (!user) return json({ error: "not authenticated" }, 401, cors);
-      const prefs = await request.json();
+      const patch = await request.json();
+      const existing = await db.prepare("SELECT data FROM preferences WHERE user_id = ?")
+        .bind(user.id).first();
+      const merged = { ...(existing ? JSON.parse(existing.data) : {}), ...patch };
       await db.prepare(
         "INSERT INTO preferences (user_id, data, updated_at) VALUES (?, ?, datetime('now')) " +
         "ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = datetime('now')"
-      ).bind(user.id, JSON.stringify(prefs)).run();
+      ).bind(user.id, JSON.stringify(merged)).run();
       return json({ ok: true }, 200, cors);
     }
 
