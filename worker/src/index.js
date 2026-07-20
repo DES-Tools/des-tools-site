@@ -191,7 +191,7 @@ export default {
       await db.prepare("UPDATE users SET email_verified = 1 WHERE id = ?").bind(row.user_id).run();
       await db.prepare("DELETE FROM email_verifications WHERE token = ?").bind(token).run();
 
-      return html(`<p>Email verified — you can close this tab and sign in at <a href="${env.ALLOWED_ORIGIN}/des-tools-site/">DES Tools</a>.</p>`, 200);
+      return html(`<p>Email verified — you can close this tab and sign in at <a href="${env.ALLOWED_ORIGIN}/">DES Tools</a>.</p>`, 200);
     }
 
     if (url.pathname === "/api/resend-verification" && request.method === "POST") {

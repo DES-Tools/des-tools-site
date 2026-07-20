@@ -9,7 +9,7 @@ database_id = "bda6def9-4123-4f5f-b07e-de4187ca52e8"
 
 # Origin header only carries scheme+host, not the repo path.
 [vars]
-ALLOWED_ORIGIN = "https://des-tools.github.io"
+ALLOWED_ORIGIN = "https://tools.mydes.tech"
 # Sends from mydes.tech once that domain is verified in Resend.
 FROM_EMAIL = "DES Tools <onboarding@mydes.tech>"
 

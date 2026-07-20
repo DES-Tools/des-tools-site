@@ -5,7 +5,7 @@
 //
 // Usage from any tool, standalone or embedded (same GitHub Pages origin
 // either way, so this works unmodified in both):
-//   <script src="https://des-tools.github.io/des-tools-site/assets/prefs.js"></script>
+//   <script src="https://tools.mydes.tech/assets/prefs.js"></script>
 //   const theme = await DESPrefs.get("theme", "dark");
 //   await DESPrefs.set("theme", "light");
 
