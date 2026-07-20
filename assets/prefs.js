@@ -45,11 +45,14 @@
       const session = await me();
       if (session && key in session.preferences) return session.preferences[key];
       const local = localStorage.getItem(key);
-      return local === null ? fallback : local;
+      if (local === null) return fallback;
+      // Old values (e.g. theme) were stored as raw strings, not JSON -- fall
+      // back to the raw string when parsing fails instead of erroring.
+      try { return JSON.parse(local); } catch { return local; }
     },
 
     async set(key, value) {
-      localStorage.setItem(key, value);
+      localStorage.setItem(key, JSON.stringify(value));
       const session = await me();
       if (!session) return;
       try {
