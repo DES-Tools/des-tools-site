@@ -1,0 +1,3 @@
+[submodule "stream-calculator"]
+	path = stream-calculator
+	url = https://github.com/DES-Tools/Stream-Calculator.git
