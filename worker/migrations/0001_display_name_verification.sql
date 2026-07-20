@@ -1,0 +1,8 @@
+ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0;
+
+CREATE TABLE email_verifications (
+  token TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TEXT NOT NULL
+);

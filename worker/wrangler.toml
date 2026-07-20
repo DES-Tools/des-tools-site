@@ -10,3 +10,11 @@ database_id = "bda6def9-4123-4f5f-b07e-de4187ca52e8"
 # Origin header only carries scheme+host, not the repo path.
 [vars]
 ALLOWED_ORIGIN = "https://des-tools.github.io"
+# Until descomm.com is verified in Resend, "onboarding@resend.dev" works
+# for testing without any DNS setup. Switch to a descomm.com address once
+# the domain is verified in the Resend dashboard.
+FROM_EMAIL = "DES Tools <onboarding@resend.dev>"
+
+# RESEND_API_KEY is a secret, not a var -- set it with:
+#   npx wrangler secret put RESEND_API_KEY
+# (run that yourself in your own terminal so the key never appears in chat)

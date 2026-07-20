@@ -39,20 +39,6 @@ renderNav();
 renderRoute();
 window.addEventListener("hashchange", renderRoute);
 
-const authBox = document.getElementById("auth-box");
-const authForm = document.getElementById("auth-form");
-const authMsg = document.getElementById("auth-msg");
-const userBox = document.getElementById("user-box");
-const userEmail = document.getElementById("user-email");
-const logoutBtn = document.getElementById("logout-btn");
-const themeToggle = document.getElementById("theme-toggle");
-
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  if (themeToggle) themeToggle.checked = theme === "dark";
-  document.dispatchEvent(new CustomEvent("des-tools:theme", { detail: theme }));
-}
-
 async function api(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     credentials: "include",
@@ -62,49 +48,178 @@ async function api(path, options = {}) {
   return res.ok ? res.json() : Promise.reject(await res.json().catch(() => ({ error: res.statusText })));
 }
 
+// ---- Theme (light / dark / system) ----
+
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+let themeMode = "light";
+
+function resolveTheme(mode) {
+  return mode === "system" ? (systemDark.matches ? "dark" : "light") : mode;
+}
+
+function applyThemeMode(mode) {
+  themeMode = mode;
+  const resolved = resolveTheme(mode);
+  document.documentElement.dataset.theme = resolved;
+  document.dispatchEvent(new CustomEvent("des-tools:theme", { detail: resolved }));
+  document.querySelectorAll(".theme-choice").forEach(btn =>
+    btn.classList.toggle("active", btn.dataset.themeMode === mode)
+  );
+}
+
+systemDark.addEventListener("change", () => {
+  if (themeMode === "system") applyThemeMode("system");
+});
+
+document.querySelectorAll(".theme-choice").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const mode = btn.dataset.themeMode;
+    applyThemeMode(mode);
+    localStorage.setItem("themeMode", mode);
+    api("/api/prefs", { method: "POST", body: JSON.stringify({ themeMode: mode }) }).catch(() => {});
+    userDropdown.hidden = true;
+  });
+});
+
+// ---- Session / header ----
+
+const signinBtn = document.getElementById("signin-btn");
+const userMenu = document.getElementById("user-menu");
+const userMenuBtn = document.getElementById("user-menu-btn");
+const userDropdown = document.getElementById("user-dropdown");
+const userDisplayName = document.getElementById("user-display-name");
+const logoutBtn = document.getElementById("logout-btn");
+
+let currentUser = null;
+
 async function refreshSession() {
   try {
-    const me = await api("/api/me");
-    authBox.hidden = true;
-    userBox.hidden = false;
-    userEmail.textContent = me.email;
-    applyTheme(me.preferences.theme || "light");
+    currentUser = await api("/api/me");
+    signinBtn.hidden = true;
+    userMenu.hidden = false;
+    userDisplayName.textContent = currentUser.displayName || currentUser.email;
+    applyThemeMode(currentUser.preferences.themeMode || currentUser.preferences.theme || "light");
   } catch {
-    authBox.hidden = false;
-    userBox.hidden = true;
-    applyTheme(localStorage.getItem("theme") || "light");
+    currentUser = null;
+    signinBtn.hidden = false;
+    userMenu.hidden = true;
+    applyThemeMode(localStorage.getItem("themeMode") || localStorage.getItem("theme") || "light");
   }
 }
 
-authForm?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = authForm.email.value.trim();
-  const password = authForm.password.value;
-  const mode = e.submitter?.name === "register" ? "register" : "login";
-  authMsg.textContent = "";
-  try {
-    await api(`/api/${mode}`, { method: "POST", body: JSON.stringify({ email, password }) });
-    if (mode === "register") {
-      authMsg.textContent = "Account created, log in above.";
-    } else {
-      await refreshSession();
-    }
-  } catch (err) {
-    authMsg.textContent = err.error || "Something went wrong.";
-  }
+userMenuBtn.addEventListener("click", () => {
+  userDropdown.hidden = !userDropdown.hidden;
+});
+document.addEventListener("click", (e) => {
+  if (!userMenu.hidden && !userMenu.contains(e.target)) userDropdown.hidden = true;
 });
 
-logoutBtn?.addEventListener("click", async () => {
+logoutBtn.addEventListener("click", async () => {
   await api("/api/logout", { method: "POST" }).catch(() => {});
+  userDropdown.hidden = true;
   refreshSession();
 });
 
-themeToggle?.addEventListener("change", async () => {
-  const theme = themeToggle.checked ? "dark" : "light";
-  applyTheme(theme);
-  localStorage.setItem("theme", theme);
-  api("/api/prefs", { method: "POST", body: JSON.stringify({ theme }) }).catch(() => {});
+// ---- Sign in / register modal ----
+
+const authModal = document.getElementById("auth-modal");
+const loginForm = document.getElementById("login-form");
+const registerForm = document.getElementById("register-form");
+const loginMsg = document.getElementById("login-msg");
+const registerMsg = document.getElementById("register-msg");
+
+function showForm(which) {
+  loginForm.hidden = which !== "login";
+  registerForm.hidden = which !== "register";
+  loginMsg.textContent = "";
+  registerMsg.textContent = "";
+}
+
+signinBtn.addEventListener("click", () => {
+  showForm("login");
+  authModal.showModal();
+});
+document.getElementById("auth-modal-close").addEventListener("click", () => authModal.close());
+document.getElementById("show-register").addEventListener("click", (e) => { e.preventDefault(); showForm("register"); });
+document.getElementById("show-login").addEventListener("click", (e) => { e.preventDefault(); showForm("login"); });
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginMsg.textContent = "";
+  loginMsg.classList.remove("error");
+  const email = loginForm.email.value.trim();
+  const password = loginForm.password.value;
+  try {
+    await api("/api/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    authModal.close();
+    loginForm.reset();
+    await refreshSession();
+  } catch (err) {
+    loginMsg.classList.add("error");
+    if (err.error === "unverified") {
+      loginMsg.innerHTML = `Please verify your email first. <a href="#" id="resend-verify">Resend verification email</a>`;
+      document.getElementById("resend-verify").addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        loginMsg.textContent = "Sending...";
+        await api("/api/resend-verification", { method: "POST", body: JSON.stringify({ email }) }).catch(() => {});
+        loginMsg.textContent = "If that account needs verifying, a new email is on its way.";
+      });
+    } else {
+      loginMsg.textContent = err.error || "Something went wrong.";
+    }
+  }
 });
 
-applyTheme(localStorage.getItem("theme") || "light");
+registerForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  registerMsg.textContent = "";
+  registerMsg.classList.remove("error");
+  const displayName = registerForm.displayName.value.trim();
+  const email = registerForm.email.value.trim();
+  const password = registerForm.password.value;
+
+  if (!email.toLowerCase().endsWith("@descomm.com")) {
+    registerMsg.classList.add("error");
+    registerMsg.textContent = "Registration is limited to @descomm.com emails.";
+    return;
+  }
+
+  try {
+    await api("/api/register", { method: "POST", body: JSON.stringify({ email, password, displayName }) });
+    registerForm.reset();
+    registerMsg.classList.remove("error");
+    registerMsg.textContent = "Account created! Check your inbox for a verification link before signing in.";
+  } catch (err) {
+    registerMsg.classList.add("error");
+    registerMsg.textContent = err.error || "Something went wrong.";
+  }
+});
+
+// ---- Profile settings modal ----
+
+const profileModal = document.getElementById("profile-modal");
+const profileForm = document.getElementById("profile-form");
+const profileMsg = document.getElementById("profile-msg");
+
+document.getElementById("profile-btn").addEventListener("click", () => {
+  userDropdown.hidden = true;
+  profileMsg.textContent = "";
+  profileForm.displayName.value = currentUser?.displayName || "";
+  profileModal.showModal();
+});
+document.getElementById("profile-modal-close").addEventListener("click", () => profileModal.close());
+
+profileForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  profileMsg.classList.remove("error");
+  try {
+    await api("/api/profile", { method: "POST", body: JSON.stringify({ displayName: profileForm.displayName.value.trim() }) });
+    await refreshSession();
+    profileModal.close();
+  } catch (err) {
+    profileMsg.classList.add("error");
+    profileMsg.textContent = err.error || "Something went wrong.";
+  }
+});
+
 refreshSession();
