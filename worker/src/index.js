@@ -105,7 +105,7 @@ export default {
       const { email, password, displayName } = await request.json();
       const normalizedEmail = (email || "").toLowerCase().trim();
       if (!normalizedEmail.endsWith(ALLOWED_EMAIL_DOMAIN)) {
-        return json({ error: `Registration is limited to ${ALLOWED_EMAIL_DOMAIN} emails` }, 400, cors);
+        return json({ error: "This email provider is not supported." }, 400, cors);
       }
       if (!password || password.length < 8) {
         return json({ error: "Password must be at least 8 characters" }, 400, cors);

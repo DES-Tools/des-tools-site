@@ -180,7 +180,7 @@ registerForm.addEventListener("submit", async (e) => {
 
   if (!email.toLowerCase().endsWith("@descomm.com")) {
     registerMsg.classList.add("error");
-    registerMsg.textContent = "Registration is limited to @descomm.com emails.";
+    registerMsg.textContent = "This email provider is not supported.";
     return;
   }
 
