@@ -12,6 +12,30 @@
 const SESSION_DAYS = 30;
 const VERIFY_HOURS = 24;
 const ALLOWED_EMAIL_DOMAIN = "@descomm.com";
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+
+// Fixed-window counter per bucket (path:ip). D1 read replicas are eventually
+// consistent, so a request can occasionally read a stale counter and slip
+// through near the limit -- a deterrent against casual abuse, not an airtight
+// guarantee. Upgrade to a Durable Object counter if that gap ever matters.
+async function checkRateLimit(db, bucket, limit, windowSeconds) {
+  const now = Date.now();
+  const row = await db.prepare("SELECT window_start, count FROM rate_limits WHERE bucket = ?")
+    .bind(bucket).first();
+
+  if (!row || now - row.window_start > windowSeconds * 1000) {
+    await db.prepare(
+      "INSERT INTO rate_limits (bucket, window_start, count) VALUES (?, ?, 1) " +
+      "ON CONFLICT(bucket) DO UPDATE SET window_start = excluded.window_start, count = 1"
+    ).bind(bucket, now).run();
+    return true;
+  }
+
+  if (row.count >= limit) return false;
+  await db.prepare("UPDATE rate_limits SET count = count + 1 WHERE bucket = ?").bind(bucket).run();
+  return true;
+}
 
 function corsHeaders(allowed) {
   return {
@@ -103,6 +127,13 @@ export default {
     }
 
     const db = env.DB;
+
+    const RATE_LIMITED_PATHS = new Set(["/api/register", "/api/login", "/api/resend-verification"]);
+    if (RATE_LIMITED_PATHS.has(url.pathname) && request.method === "POST") {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      const allowed = await checkRateLimit(db, `${url.pathname}:${ip}`, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_SECONDS);
+      if (!allowed) return json({ error: "Too many attempts. Try again in a minute." }, 429, cors);
+    }
 
     if (url.pathname === "/api/register" && request.method === "POST") {
       const { email, password, displayName } = await request.json();

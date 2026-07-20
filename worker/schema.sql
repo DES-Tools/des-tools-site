@@ -25,3 +25,9 @@ CREATE TABLE preferences (
   data TEXT NOT NULL DEFAULT '{}',
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE rate_limits (
+  bucket TEXT PRIMARY KEY,
+  window_start INTEGER NOT NULL,
+  count INTEGER NOT NULL
+);
