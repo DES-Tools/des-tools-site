@@ -115,6 +115,8 @@ button {
   color: var(--fg);
 }
 .btn-ghost:hover { border-color: var(--accent); }
+.btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost:disabled:hover { border-color: var(--border); }
 
 .btn-primary {
   width: 100%;

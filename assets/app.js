@@ -1,5 +1,8 @@
 const API = "https://des-tools-auth.lgarrett.workers.dev";
 
+// Flip to true once Resend/email verification is confirmed working end to end.
+const AUTH_ENABLED = false;
+
 // Add an entry here for each tool submodule to add it to the dashboard nav.
 const TOOLS = [
   { slug: "stream-calculator", title: "Stream Calculator", path: "stream-calculator/index.html" },
@@ -92,6 +95,11 @@ const logoutBtn = document.getElementById("logout-btn");
 
 let currentUser = null;
 
+if (!AUTH_ENABLED) {
+  signinBtn.disabled = true;
+  signinBtn.title = "Sign-in is temporarily disabled while we verify email delivery.";
+}
+
 async function refreshSession() {
   try {
     currentUser = await api("/api/me");
@@ -136,6 +144,7 @@ function showForm(which) {
 }
 
 signinBtn.addEventListener("click", () => {
+  if (!AUTH_ENABLED) return;
   showForm("login");
   authModal.showModal();
 });
