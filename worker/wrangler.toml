@@ -5,9 +5,8 @@ compatibility_date = "2024-09-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "des-tools"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "bda6def9-4123-4f5f-b07e-de4187ca52e8"
 
-# Set the exact GitHub Pages origin allowed to call this Worker.
-# e.g. https://your-org.github.io
+# Origin header only carries scheme+host, not the repo path.
 [vars]
-ALLOWED_ORIGIN = "https://your-org.github.io"
+ALLOWED_ORIGIN = "https://des-tools.github.io"

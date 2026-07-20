@@ -1,4 +1,4 @@
-const API = "https://des-tools-auth.YOUR-SUBDOMAIN.workers.dev";
+const API = "https://des-tools-auth.lgarrett.workers.dev";
 
 const authBox = document.getElementById("auth-box");
 const authForm = document.getElementById("auth-form");
