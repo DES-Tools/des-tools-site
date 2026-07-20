@@ -106,12 +106,12 @@ async function refreshSession() {
     signinBtn.hidden = true;
     userMenu.hidden = false;
     userDisplayName.textContent = currentUser.displayName || currentUser.email;
-    applyThemeMode(currentUser.preferences.themeMode || currentUser.preferences.theme || "light");
+    applyThemeMode(currentUser.preferences.themeMode || currentUser.preferences.theme || "system");
   } catch {
     currentUser = null;
     signinBtn.hidden = false;
     userMenu.hidden = true;
-    applyThemeMode(localStorage.getItem("themeMode") || localStorage.getItem("theme") || "light");
+    applyThemeMode(localStorage.getItem("themeMode") || localStorage.getItem("theme") || "system");
   }
 }
 
