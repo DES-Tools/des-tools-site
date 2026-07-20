@@ -172,6 +172,7 @@ dialog {
 dialog::backdrop { background: rgba(0, 0, 0, .4); }
 dialog h2 { margin: 0 0 1rem; font-size: 1.1rem; }
 dialog form { display: flex; flex-direction: column; gap: .6rem; }
+dialog form[hidden] { display: none; }
 .dialog-close {
   position: absolute;
   top: .5rem;
@@ -186,3 +187,9 @@ dialog form { display: flex; flex-direction: column; gap: .6rem; }
 .dialog-msg { font-size: .85rem; min-height: 1.1em; margin: 0; }
 .dialog-msg.error { color: #dc2626; }
 .dialog-switch { font-size: .85rem; margin: 0; }
+dialog a, .dialog-msg a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+dialog a:hover, .dialog-msg a:hover { text-decoration: none; }
